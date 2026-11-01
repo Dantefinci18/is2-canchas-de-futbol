@@ -1,0 +1,144 @@
+// Sistema de Turnos de Futbol - modelo de dominio
+// Ver seccion 4.1 del TP (Clases, atributos, metodos y responsabilidades)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Rol {
+  JUGADOR
+  ADMINISTRADOR
+}
+
+enum TipoCancha {
+  FUTBOL_5
+  FUTBOL_7
+  FUTBOL_11
+}
+
+enum EstadoReserva {
+  PENDIENTE_SENA
+  CONFIRMADA
+  CANCELADA
+  EXPIRADA
+}
+
+enum TipoPago {
+  SENA
+  SALDO
+  DEVOLUCION
+}
+
+enum EstadoPago {
+  PENDIENTE
+  CONFIRMADO
+  RECHAZADO
+}
+
+// Usuario es la clase abstracta de la que heredan Jugador y Administrador.
+// Se modela con una unica tabla + discriminador `rol` (una fila de Usuario
+// es un Jugador o un Administrador segun corresponda).
+model Usuario {
+  id             String   @id @default(uuid())
+  nombre         String
+  email          String   @unique
+  contrasenaHash String
+  telefono       String?
+  rol            Rol
+  createdAt      DateTime @default(now())
+
+  // Relacion propia de Jugador: un Jugador realiza muchas Reservas.
+  reservas Reserva[]
+
+  // Relacion propia de Administrador: cada Administrador administra un Complejo.
+  complejo Complejo?
+
+  @@map("usuarios")
+}
+
+// Agrupa las canchas de un complejo, coordina sus reservas y evita superposiciones.
+model Complejo {
+  id            String   @id @default(uuid())
+  nombre        String
+  direccion     String
+  zona          String
+  horaApertura  Int // hora de apertura en formato 24h (0-23)
+  horaCierre    Int // hora de cierre en formato 24h (1-24)
+  administrador Usuario  @relation(fields: [administradorId], references: [id])
+  administradorId String @unique
+  canchas       Cancha[]
+  createdAt     DateTime @default(now())
+
+  @@index([zona])
+  @@map("complejos")
+}
+
+// Representa una cancha y calcula su precio para un turno (via Strategy).
+model Cancha {
+  id        String     @id @default(uuid())
+  nombre    String
+  tipo      TipoCancha
+  precioHora Decimal   @db.Decimal(10, 2)
+  techada   Boolean    @default(false)
+  activa    Boolean    @default(true)
+  complejo  Complejo   @relation(fields: [complejoId], references: [id])
+  complejoId String
+
+  // Porcentajes de recargo configurables por complejo/cancha (RNF7: agregar
+  // una tarifa nueva no deberia requerir tocar Cancha ni las estrategias
+  // existentes; estos dos campos alimentan TarifaNocturna/TarifaFinDeSemana).
+  recargoNocturnoPct  Decimal @default(20) @db.Decimal(5, 2)
+  recargoFinDeSemanaPct Decimal @default(15) @db.Decimal(5, 2)
+
+  reservas  Reserva[]
+  createdAt DateTime   @default(now())
+
+  @@index([complejoId])
+  @@map("canchas")
+}
+
+// Controla el ciclo de vida de una reserva y sus reglas (sena, expiracion, cancelacion).
+// NOTA: ademas de los indices declarados abajo, la migracion
+// 20261101052658_reserva_unique_activa agrega un indice unico PARCIAL
+// (canchaId, fecha, horaInicio) WHERE estado IN ('PENDIENTE_SENA','CONFIRMADA')
+// que Prisma todavia no expresa de forma nativa en el schema (RNF3).
+model Reserva {
+  id                 String        @id @default(uuid())
+  cancha             Cancha        @relation(fields: [canchaId], references: [id])
+  canchaId           String
+  jugador            Usuario       @relation(fields: [jugadorId], references: [id])
+  jugadorId          String
+  fecha              DateTime      @db.Date
+  horaInicio         Int
+  horaFin            Int
+  estado             EstadoReserva @default(PENDIENTE_SENA)
+  montoTotal         Decimal       @db.Decimal(10, 2)
+  montoSena          Decimal       @db.Decimal(10, 2)
+  fechaExpiracion    DateTime?
+  canceladaEn        DateTime?
+  pagos              Pago[]
+  createdAt          DateTime      @default(now())
+
+  @@index([canchaId, fecha])
+  @@index([jugadorId])
+  @@map("reservas")
+}
+
+// Registra senas, saldos y devoluciones.
+model Pago {
+  id        String     @id @default(uuid())
+  reserva   Reserva    @relation(fields: [reservaId], references: [id])
+  reservaId String
+  monto     Decimal    @db.Decimal(10, 2)
+  tipo      TipoPago
+  estado    EstadoPago @default(CONFIRMADO)
+  fecha     DateTime   @default(now())
+
+  @@index([reservaId])
+  @@map("pagos")
+}
