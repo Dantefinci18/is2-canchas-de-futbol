@@ -307,6 +307,70 @@ button:disabled {
 }
 
 /* Reservas / agenda */
+.agenda-fecha {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
+
+.agenda-fecha input {
+  font: inherit;
+  color: var(--text-h);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 8px;
+}
+
+.agenda-scroll {
+  max-width: 100%;
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+
+.agenda-grilla {
+  border-collapse: separate;
+  border-spacing: 4px;
+  font-size: 14px;
+  text-align: left;
+}
+
+.agenda-grilla th {
+  color: var(--text-h);
+  padding: 8px;
+  vertical-align: middle;
+}
+
+.agenda-grilla th[scope='row'] {
+  min-width: 130px;
+}
+
+.agenda-grilla th span,
+.agenda-celda span {
+  display: block;
+  font-size: 12px;
+  font-weight: normal;
+}
+
+.agenda-celda {
+  box-sizing: border-box;
+  min-width: 112px;
+  min-height: 58px;
+  width: 100%;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  padding: 8px;
+  text-align: left;
+  font-size: 14px;
+}
+
+.agenda-libre { background: #e5f2e9; color: #205e39; }
+.agenda-reservado { background: #f7e6e6; color: #833b3b; border-color: #e9c9c9; }
+.agenda-reservado:hover, .agenda-reservado[aria-pressed='true'] { border-color: #833b3b; }
+.agenda-inactiva { background: var(--code-bg); color: var(--text); }
+
 .lista-reservas {
   display: flex;
   flex-direction: column;
@@ -369,6 +433,12 @@ button:disabled {
   flex-direction: column;
   gap: 4px;
   font-size: 14px;
+}
+
+.tarjeta-cancha label.checkbox-cobertura {
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
 }
 
 .tarjeta-cancha input {

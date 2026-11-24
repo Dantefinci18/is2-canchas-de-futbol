@@ -9,7 +9,7 @@ const { AppError } = require('../utils/AppError');
 async function buscar({ zona, tipo }) {
   return prisma.complejo.findMany({
     where: {
-      ...(zona ? { zona: { contains: zona, mode: 'insensitive' } } : {}),
+      ...(zona ? { zona: { equals: zona, mode: 'insensitive' } } : {}),
       canchas: {
         some: {
           activa: true,

@@ -1,5 +1,9 @@
 import { apiFetch } from './client';
 
+export function obtenerBarrios() {
+  return apiFetch('/complejos/barrios', { auth: false });
+}
+
 export function buscarComplejos({ zona, tipo } = {}) {
   const params = new URLSearchParams();
   if (zona) params.set('zona', zona);

@@ -21,6 +21,7 @@ export default function ComplejoDetailPage() {
   const [complejo, setComplejo] = useState(null);
   const [fecha, setFecha] = useState(hoyISO());
   const [tipo, setTipo] = useState('');
+  const [cobertura, setCobertura] = useState('');
   const [turnosPorCancha, setTurnosPorCancha] = useState([]);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState('');
@@ -130,22 +131,36 @@ export default function ComplejoDetailPage() {
               Tipo de cancha
               <select value={tipo} onChange={(e) => setTipo(e.target.value)}>
                 <option value="">Todas</option>
-                {complejo.canchas.map((c) => (
-                  <option key={c.tipo} value={c.tipo}>
-                    {nombreTipoCancha(c.tipo)}
+                {[...new Set(complejo.canchas.filter((c) => c.activa).map((c) => c.tipo))].map((tipoCancha) => (
+                  <option key={tipoCancha} value={tipoCancha}>
+                    {nombreTipoCancha(tipoCancha)}
                   </option>
                 ))}
+              </select>
+            </label>
+            <label>
+              Cobertura
+              <select value={cobertura} onChange={(e) => setCobertura(e.target.value)}>
+                <option value="">Todas</option>
+                <option value="techada">Techadas</option>
+                <option value="descubierta">Descubiertas</option>
               </select>
             </label>
           </form>
 
           {cargando && <p className="estado-carga">Buscando turnos libres...</p>}
 
+          {!cargando && turnosPorCancha.filter(({ cancha }) =>
+            !cobertura || cancha.techada === (cobertura === 'techada')
+          ).length === 0 && <p>No hay canchas que coincidan con los filtros.</p>}
+
           {!cargando &&
-            turnosPorCancha.map(({ cancha, turnos }) => (
+            turnosPorCancha.filter(({ cancha }) =>
+              !cobertura || cancha.techada === (cobertura === 'techada')
+            ).map(({ cancha, turnos }) => (
               <div key={cancha.id} className="bloque-cancha">
                 <h3>
-                  {cancha.nombre} · {nombreTipoCancha(cancha.tipo)} {cancha.techada ? '(techada)' : ''}
+                  {cancha.nombre} · {nombreTipoCancha(cancha.tipo)} · {cancha.techada ? 'Techada' : 'Descubierta'}
                 </h3>
                 {turnos.length === 0 ? (
                   <p>Sin turnos libres para esta fecha.</p>

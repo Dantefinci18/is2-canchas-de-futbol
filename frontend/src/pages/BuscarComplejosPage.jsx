@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { buscarComplejos } from '../api/complejos';
+import { buscarComplejos, obtenerBarrios } from '../api/complejos';
 import { TIPOS_CANCHA, nombreTipoCancha } from '../utils/format';
 import ErrorBanner from '../components/ErrorBanner';
 
 // RF3/RF5: el jugador busca complejos por zona y tipo de cancha.
 export default function BuscarComplejosPage() {
   const [zona, setZona] = useState('');
+  const [barrios, setBarrios] = useState([]);
   const [tipo, setTipo] = useState('');
   const [complejos, setComplejos] = useState([]);
   const [cargando, setCargando] = useState(true);
@@ -30,6 +31,7 @@ export default function BuscarComplejosPage() {
     // Fetch al montar/cambiar filtros; patron estandar de carga de datos.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     buscar();
+    obtenerBarrios().then(setBarrios).catch((err) => setError(err.message));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -38,8 +40,11 @@ export default function BuscarComplejosPage() {
       <h1>Buscar complejos</h1>
       <form className="formulario-busqueda" onSubmit={buscar}>
         <label>
-          Zona
-          <input placeholder="Ej: Palermo" value={zona} onChange={(e) => setZona(e.target.value)} />
+          Barrio
+          <select value={zona} onChange={(e) => setZona(e.target.value)}>
+            <option value="">Todos los barrios</option>
+            {barrios.map((barrio) => <option key={barrio} value={barrio}>{barrio}</option>)}
+          </select>
         </label>
         <label>
           Tipo de cancha
