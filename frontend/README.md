@@ -4,6 +4,9 @@ SPA en React (Vite) + React Router. Consume la API del [backend](../backend). No
 ninguna libreria de estado global: la sesion se maneja con `AuthContext`
 (`src/context/AuthContext.jsx`) y el JWT se persiste en `localStorage`.
 
+Las rutas usan `HashRouter` para que funcionen al recargar en servidores estaticos
+sin reglas de reescritura. Por ejemplo, la agenda se abre en `/#/admin/agenda`.
+
 ## Variables de entorno (`.env`)
 
 ```

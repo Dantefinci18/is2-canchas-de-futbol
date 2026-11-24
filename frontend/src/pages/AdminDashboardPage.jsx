@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { obtenerMiComplejo, crearComplejo, actualizarComplejo } from '../api/complejos';
+import { obtenerMiComplejo, crearComplejo, actualizarComplejo, obtenerBarrios } from '../api/complejos';
 import { crearCancha, actualizarCancha, desactivarCancha } from '../api/canchas';
 import { TIPOS_CANCHA, nombreTipoCancha, formatearMoneda } from '../utils/format';
 import ErrorBanner from '../components/ErrorBanner';
@@ -18,6 +18,7 @@ const CANCHA_INICIAL = {
 // precios y tarifas (recargos que alimenta el patron Strategy del backend).
 export default function AdminDashboardPage() {
   const [complejo, setComplejo] = useState(null);
+  const [barrios, setBarrios] = useState([]);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState('');
   const [formComplejo, setFormComplejo] = useState(COMPLEJO_INICIAL);
@@ -25,7 +26,6 @@ export default function AdminDashboardPage() {
   const [enviando, setEnviando] = useState(false);
 
   async function cargar() {
-    setCargando(true);
     try {
       const datos = await obtenerMiComplejo();
       setComplejo(datos);
@@ -48,6 +48,7 @@ export default function AdminDashboardPage() {
     // Fetch al montar; patron estandar de carga de datos.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     cargar();
+    obtenerBarrios().then(setBarrios).catch((err) => setError(err.message));
   }, []);
 
   async function handleGuardarComplejo(e) {
@@ -94,8 +95,19 @@ export default function AdminDashboardPage() {
   }
 
   async function handleActualizarPrecio(cancha, precioHora) {
+    if (Number(precioHora) === Number(cancha.precioHora)) return;
     try {
       await actualizarCancha(cancha.id, { precioHora: Number(precioHora) });
+      await cargar();
+    } catch (err) {
+      setError(err.message);
+    }
+  }
+
+  async function handleActualizarCobertura(cancha, techada) {
+    setError('');
+    try {
+      await actualizarCancha(cancha.id, { techada });
       await cargar();
     } catch (err) {
       setError(err.message);
@@ -141,12 +153,18 @@ export default function AdminDashboardPage() {
           />
         </label>
         <label>
-          Zona
-          <input
+          Barrio
+          <select
             required
-            value={formComplejo.zona}
+            value={barrios.includes(formComplejo.zona) ? formComplejo.zona : ''}
             onChange={(e) => setFormComplejo({ ...formComplejo, zona: e.target.value })}
-          />
+          >
+            <option value="">Seleccioná un barrio</option>
+            {barrios.map((barrio) => <option key={barrio} value={barrio}>{barrio}</option>)}
+          </select>
+          {formComplejo.zona && barrios.length > 0 && !barrios.includes(formComplejo.zona) && (
+            <span>Zona registrada: {formComplejo.zona}. Seleccioná un barrio para actualizarla.</span>
+          )}
         </label>
         <div className="fila">
           <label>
@@ -184,7 +202,15 @@ export default function AdminDashboardPage() {
             {complejo.canchas.map((cancha) => (
               <div key={cancha.id} className={`tarjeta-cancha ${cancha.activa ? '' : 'inactiva'}`}>
                 <h3>{cancha.nombre}</h3>
-                <p>{nombreTipoCancha(cancha.tipo)} {cancha.techada ? '· techada' : ''}</p>
+                <p>{nombreTipoCancha(cancha.tipo)} · {cancha.techada ? 'Techada' : 'Descubierta'}</p>
+                <label className="checkbox-cobertura">
+                  <input
+                    type="checkbox"
+                    checked={cancha.techada}
+                    onChange={(e) => handleActualizarCobertura(cancha, e.target.checked)}
+                  />
+                  Techada
+                </label>
                 <label>
                   Precio por hora
                   <input

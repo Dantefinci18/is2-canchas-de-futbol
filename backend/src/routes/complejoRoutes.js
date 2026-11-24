@@ -8,6 +8,7 @@ const router = Router();
 
 // Busqueda publica (el jugador no necesita estar logueado para explorar).
 router.get('/', complejoController.buscar);
+router.get('/barrios', complejoController.barrios);
 router.get('/mio', requireAuth, requireRol('ADMINISTRADOR'), complejoController.misComplejo);
 router.get('/:id', complejoController.obtenerPorId);
 router.post('/', requireAuth, requireRol('ADMINISTRADOR'), complejoController.crear);
