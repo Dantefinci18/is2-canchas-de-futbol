@@ -6,7 +6,7 @@
 | Alumno | Padron |
 | :--- | :---: |
 | Dante Finci | 108456 |
-| | |
+| Lamanna Tobias | 104126 |
 | | |
 | | |
 
